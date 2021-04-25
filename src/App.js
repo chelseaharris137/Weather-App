@@ -1,32 +1,67 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Route,
+  Switch,
+  Redirect,
+} from "react-router-dom";
 import axios from "axios";
 import "./Sass/App.sass";
 import Weather from "./components/Weather.js";
 import Search from "./components/Search.js";
 
 const App = () => {
+  //hooks mantaining state including search, weather result, and favorite locations list
   const [searchVal, setSearchVal] = useState("");
-  const [lat, setLat] = useState("");
-  const [long, setLong] = useState("");
   const [weather, setWeather] = useState(null);
+  const [favorites, setFavorites] = useState([]);
+  const [displayLocation, setDisplayLocation] = useState("");
 
+  //update this so that the api key lives in another file
+  const apiKey = process.env.REACT_APP_GOOGLE_API_KEY;
+
+  //nested api call for both geolocation and weather
   useEffect(() => {
     if (searchVal !== "") {
-      //here is where the address request for long and lat goes
-      const requestOne = axios.get(one);
+      const address = searchVal;
+      const location = `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${apiKey}`;
+      const requestOne = axios.get(location);
+
+      requestOne
+        .then((response) => {
+          const result = response.data.results[0].geometry.location;
+          const location = response.data.results[0].formatted_address;
+          setDisplayLocation(location);
+          return result;
+        })
+        .then((geoData) => {
+          const lat = geoData.lat;
+          const long = geoData.lng;
+          if (lat === undefined || long === undefined) {
+            alert("Please enter a valid zipcode or address");
+          }
+          return {
+            lat: lat,
+            long: long,
+          };
+        })
+        .then((location) => {
+          const lat = location.lat;
+          const long = location.long;
+          return axios.get(
+            `https://api.weather.gov/points/${lat},${long}/forecast`
+          );
+        })
+        .then((result) => {
+          setWeather(result.data.properties.periods);
+        })
+        .catch((error) => {
+          console(error);
+        });
     }
   }, [searchVal]);
-  //only fetch if searchVal !== ""
-  //otherwise return alert
-  //if lat and long come back and no error --> fetch for noaa
-  //https://api.weather.gov/points/39.7332,-75.1316/forecast
-  //if error return alert
-  //otherwise
-  //add data as props on weather component
-  //re-route based on if weather data exists???
-  //will probably need some kind of load processor
 
+  //function that sends search hook down to child component
   const setSearch = (value) => {
     setSearchVal(value);
   };
@@ -40,7 +75,7 @@ const App = () => {
               <Search setSearch={setSearch} />
             </Route>
             <Route exact path="/current-weather">
-              <Weather />
+              <Weather weather={weather} displayLocation={displayLocation} />
             </Route>
           </Switch>
         </div>

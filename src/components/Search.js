@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 
 const Search = ({ setSearch }) => {
   const [text, setText] = useState("");
+
   return (
     <div className="col-md-9">
       <div className="card p-4 mt-3">
@@ -11,7 +12,8 @@ const Search = ({ setSearch }) => {
             <input
               type="text"
               className="search-input"
-              placeholder="Search..."
+              placeholder="Enter full address or zipcode..."
+              value={text}
               onChange={(e) => {
                 setText(e.target.value);
               }}
