@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Logo from "../images/weather-icon.png";
 
 const Search = ({ setAddressFromInput }) => {
+  //this holds the input value/address that is passed back up to app.js
   const [text, setText] = useState("");
 
   return (
@@ -39,11 +40,6 @@ const Search = ({ setAddressFromInput }) => {
               <i className="fa fa-search"></i>
             </a>
           </div>
-        </div>
-        <br />
-        <br />
-        <div className="row d-flex justify-content-center" id="favs">
-          These are the favs
         </div>
       </div>
     </div>

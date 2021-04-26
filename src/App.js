@@ -64,7 +64,6 @@ const App = () => {
             today: finalWeatherData[0],
             thisweek: finalWeatherData.slice(1, finalWeatherData.length - 1),
           });
-          setAddressFromInput("");
         })
         .catch((error) => {
           console.log("something isnt working");
