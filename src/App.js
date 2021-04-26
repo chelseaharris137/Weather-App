@@ -4,6 +4,7 @@ import {
   Route,
   Switch,
   Redirect,
+  useHistory,
 } from "react-router-dom";
 import axios from "axios";
 import "./Sass/App.sass";
@@ -12,26 +13,31 @@ import Search from "./components/Search.js";
 
 const App = () => {
   //hooks mantaining state including search, weather result, and favorite locations list
-  const [searchVal, setSearchVal] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
   const [weather, setWeather] = useState(null);
-  const [favorites, setFavorites] = useState([]);
-  const [displayLocation, setDisplayLocation] = useState("");
+  const [favorites, setFavorites] = useState();
+
+  const history = useHistory();
 
   //update this so that the api key lives in another file
   const apiKey = process.env.REACT_APP_GOOGLE_API_KEY;
 
   //nested api call for both geolocation and weather
   useEffect(() => {
-    if (searchVal !== "") {
-      const address = searchVal;
+    if (address !== "") {
       const location = `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${apiKey}`;
       const requestOne = axios.get(location);
 
       requestOne
         .then((response) => {
           const result = response.data.results[0].geometry.location;
-          const location = response.data.results[0].formatted_address;
-          setDisplayLocation(location);
+          response.data.results[0].address_components.forEach((elem) => {
+            if (elem.types.includes("locality")) {
+              setCity(elem.long_name);
+            }
+          });
+
           return result;
         })
         .then((geoData) => {
@@ -53,29 +59,35 @@ const App = () => {
           );
         })
         .then((result) => {
-          setWeather(result.data.properties.periods);
+          const finalWeatherData = result.data.properties.periods;
+          setWeather({
+            today: finalWeatherData[0],
+            thisweek: finalWeatherData.slice(1, finalWeatherData.length - 1),
+          });
+          setAddressFromInput("");
         })
         .catch((error) => {
-          console(error);
+          console.log("something isnt working");
         });
     }
-  }, [searchVal]);
+  }, [address]);
 
   //function that sends search hook down to child component
-  const setSearch = (value) => {
-    setSearchVal(value);
+  const setAddressFromInput = (value) => {
+    setAddress(value);
   };
 
   return (
     <Router>
       <div className="container mt-4">
         <div className="row d-flex justify-content-center">
+          {weather ? <Redirect to="/current-weather" /> : null}
           <Switch>
             <Route exact path="/">
-              <Search setSearch={setSearch} />
+              <Search setAddressFromInput={setAddressFromInput} />
             </Route>
             <Route exact path="/current-weather">
-              <Weather weather={weather} displayLocation={displayLocation} />
+              <Weather weather={weather} city={city} />
             </Route>
           </Switch>
         </div>
